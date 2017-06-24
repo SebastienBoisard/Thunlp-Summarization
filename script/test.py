@@ -1,4 +1,3 @@
-import tensorflow as tf
 import subprocess
 import logging
 import os
@@ -46,15 +45,13 @@ if __name__ == "__main__":
 
     for model in models:
         ckpt = model_pattern.format(model[0], model[1])
-        logging.info("Test {}. ".format(ckpt))
+        logging.info("Test %s", ckpt)
         for dataset, tag in zip(datasets, geneos):
             for beam_search in beam_searchs:
-                logging.info("Test {} with beam_size = {}".format(
-                    data_pattern.format(dataset), beam_search))
-                output_file = OUTPUT_PATTERN.format(dataset=dataset,
-                    description=str(beam_search)+"_"+str(model[1]))
+                logging.info("Test %s with beam_size = %d", data_pattern.format(dataset), beam_search)
+                output_file = OUTPUT_PATTERN.format(dataset=dataset, description=str(beam_search)+"_"+str(model[1]))
                 if os.path.exists(output_file):
-                    logging.info("{} exists, skip testing".format(output_file))
+                    logging.info("%s exists, skip testing", output_file)
                     continue
                 proc = ["python3", "src/summarization.py",
                         "--test_file", data_pattern.format(dataset),

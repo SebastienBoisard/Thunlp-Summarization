@@ -9,6 +9,20 @@ This is an implementation of sequence-to-sequence model using a bidirectional GR
 ## Dataset
 Please check [harvardnlp/sent-summary](https://github.com/harvardnlp/sent-summary).
 
+Download the file `summary.tar.gz` (290866023 bytes),   
+untar this archive (`tar xvfz summary.tar.gz`) then   
+uncompress and move the following files to the `data/` folder:    
+  - sumdata/train/train.title.txt.gz  
+  - sumdata/train/valid.article.filter.txt  
+  - sumdata/train/valid.title.filter.txt  
+  - sumdata/train/train.article.txt.gz  
+  
+and move the following directories under the `data/` folder:   
+  - sumdata/DUC2004/  
+  - sumdata/Giga/  
+  - sumdata/DUC2003/  
+
+
 ## Usage
 Please download the dataset and put all `.txt` into `data/`. 
 

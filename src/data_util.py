@@ -14,14 +14,13 @@ ID_GO = 3
 
 
 def load_dict(dict_path, max_vocab=None):
-    logging.info("Try load dict from {}.".format(dict_path))
+    logging.info("Try loading dict from %s", dict_path)
     try:
         dict_file = open(dict_path)
         dict_data = dict_file.readlines()
         dict_file.close()
     except:
-        logging.info(
-            "Load dict {dict} failed, create later.".format(dict=dict_path))
+        logging.info("Load dict %s failed, create later", dict_path)
         return None
 
     dict_data = list(map(lambda x: x.split(), dict_data))
@@ -29,13 +28,12 @@ def load_dict(dict_path, max_vocab=None):
         dict_data = list(filter(lambda x: int(x[0]) < max_vocab, dict_data))
     tok2id = dict(map(lambda x: (x[1], int(x[0])), dict_data))
     id2tok = dict(map(lambda x: (int(x[0]), x[1]), dict_data))
-    logging.info(
-        "Load dict {} with {} words.".format(dict_path, len(tok2id)))
-    return (tok2id, id2tok)
+    logging.info("Load dict %s with %s words.", dict_path, len(tok2id))
+    return tok2id, id2tok
 
 
 def create_dict(dict_path, corpus, max_vocab=None):
-    logging.info("Create dict {}.".format(dict_path))
+    logging.info("Create dict %s", dict_path)
     counter = {}
     for line in corpus:
         for word in line:
@@ -47,7 +45,7 @@ def create_dict(dict_path, corpus, max_vocab=None):
     for mark_t in MARKS:
         if mark_t in counter:
             del counter[mark_t]
-            logging.warning("{} appears in corpus.".format(mark_t))
+            logging.warning("%s appears in corpus.", mark_t)
 
     counter = list(counter.items())
     counter.sort(key=lambda x: -x[1])
@@ -64,9 +62,8 @@ def create_dict(dict_path, corpus, max_vocab=None):
             tok2id[tok] = idx
             id2tok[idx] = tok
 
-    logging.info(
-        "Create dict {} with {} words.".format(dict_path, len(words)))
-    return (tok2id, id2tok)
+    logging.info("Create dict %s with %d words", dict_path, len(words))
+    return tok2id, id2tok
 
 
 def corpus_map2id(data, tok2id):
@@ -96,16 +93,17 @@ def load_data(doc_filename,
               sum_dict_path,
               max_doc_vocab=None,
               max_sum_vocab=None):
-    logging.info(
-        "Load document from {}; summary from {}.".format(
-            doc_filename, sum_filename))
+    logging.info("Load document from %s", doc_filename)
+    logging.info("Load summary from %s", sum_filename)
 
     with open(doc_filename) as docfile:
         docs = docfile.readlines()
     with open(sum_filename) as sumfile:
         sums = sumfile.readlines()
+
     assert len(docs) == len(sums)
-    logging.info("Load {num} pairs of data.".format(num=len(docs)))
+
+    logging.info("Load %d pairs of data.", len(docs))
 
     docs = list(map(lambda x: x.split(), docs))
     sums = list(map(lambda x: x.split(), sums))
@@ -119,11 +117,10 @@ def load_data(doc_filename,
         sum_dict = create_dict(sum_dict_path, sums, max_sum_vocab)
 
     docid, cover = corpus_map2id(docs, doc_dict[0])
-    logging.info(
-        "Doc dict covers {:.2f}% words.".format(cover * 100))
+    logging.info("Doc dict covers %.2f%% words.", cover * 100)
+
     sumid, cover = corpus_map2id(sums, sum_dict[0])
-    logging.info(
-        "Sum dict covers {:.2f}% words.".format(cover * 100))
+    logging.info("Sum dict covers %.2f%% words.", cover * 100)
 
     return docid, sumid, doc_dict, sum_dict
 
@@ -132,26 +129,22 @@ def load_valid_data(doc_filename,
                     sum_filename,
                     doc_dict,
                     sum_dict):
-    logging.info(
-        "Load validation document from {}; summary from {}.".format(
-            doc_filename, sum_filename))
+    logging.info("Load validation document from %s; summary from %s", doc_filename, sum_filename)
     with open(doc_filename) as docfile:
         docs = docfile.readlines()
     with open(sum_filename) as sumfile:
         sums = sumfile.readlines()
     assert len(sums) == len(docs)
 
-    logging.info("Load {} validation documents.".format(len(docs)))
+    logging.info("Load %d validation documents", len(docs))
 
     docs = list(map(lambda x: x.split(), docs))
     sums = list(map(lambda x: x.split(), sums))
 
     docid, cover = corpus_map2id(docs, doc_dict[0])
-    logging.info(
-        "Doc dict covers {:.2f}% words on validation set.".format(cover * 100))
+    logging.info("Doc dict covers %.2f%% words on validation set", cover * 100)
     sumid, cover = corpus_map2id(sums, sum_dict[0])
-    logging.info(
-        "Sum dict covers {:.2f}% words on validation set.".format(cover * 100))
+    logging.info("Sum dict covers %.2f%% words on validation set", cover * 100)
     return docid, sumid
 
 
@@ -169,18 +162,17 @@ def sen_postprocess(sen):
 
 
 def load_test_data(doc_filename, doc_dict):
-    logging.info("Load test document from {doc}.".format(doc=doc_filename))
+    logging.info("Load test document from %s", doc_filename)
 
     with open(doc_filename) as docfile:
         docs = docfile.readlines()
     docs = corpus_preprocess(docs)
 
-    logging.info("Load {num} testing documents.".format(num=len(docs)))
+    logging.info("Load %d testing documents", len(docs))
     docs = list(map(lambda x: x.split(), docs))
 
     docid, cover = corpus_map2id(docs, doc_dict[0])
-    logging.info(
-        "Doc dict covers {:.2f}% words.".format(cover * 100))
+    logging.info("Doc dict covers %.2f%% words", cover * 100)
 
     return docid
 
