@@ -79,19 +79,31 @@ def create_model(session, forward_only):
 
 def train():
     logging.info("Preparing summarization data.")
-    docid, sumid, doc_dict, sum_dict = \
-        data_util.load_data(
-            FLAGS.data_dir + "/train.article.txt",
-            FLAGS.data_dir + "/train.title.txt",
-            FLAGS.data_dir + "/doc_dict.txt",
-            FLAGS.data_dir + "/sum_dict.txt",
-            FLAGS.doc_vocab_size, FLAGS.sum_vocab_size)
 
-    val_docid, val_sumid = \
-        data_util.load_valid_data(
-            FLAGS.data_dir + "/valid.article.filter.txt",
-            FLAGS.data_dir + "/valid.title.filter.txt",
-            doc_dict, sum_dict)
+
+    # docid, sumid, doc_dict, sum_dict = \
+    #     data_util.load_data(
+    #         FLAGS.data_dir + "/train.article.txt",
+    #         FLAGS.data_dir + "/train.title.txt",
+    #         FLAGS.data_dir + "/doc_dict.txt",
+    #         FLAGS.data_dir + "/sum_dict.txt",
+    #         FLAGS.doc_vocab_size, FLAGS.sum_vocab_size)
+
+    docid, doc_dict = data_util.load_data(
+        "document",
+        FLAGS.data_dir + "/train.article.txt",
+        FLAGS.data_dir + "/doc_dict.txt",
+        FLAGS.doc_vocab_size)
+
+    sumid, sum_dict = data_util.load_data(
+        "summary",
+        FLAGS.data_dir + "/train.title.txt",
+        FLAGS.data_dir + "/sum_dict.txt",
+        FLAGS.sum_vocab_size)
+
+    val_docid = data_util.load_valid_data(FLAGS.data_dir + "/valid.article.filter.txt", doc_dict)
+
+    val_sumid = data_util.load_valid_data(FLAGS.data_dir + "/valid.title.filter.txt", sum_dict)
 
     with tf.Session() as sess:
         # Create model.

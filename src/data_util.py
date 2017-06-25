@@ -1,6 +1,8 @@
 import logging
 
+import os.path
 import numpy as np
+import dictionary
 
 MARK_PAD = "<PAD>"
 MARK_UNK = "<UNK>"
@@ -87,65 +89,66 @@ def sen_map2tok(sen, id2tok):
     return list(map(lambda x: id2tok[x], sen))
 
 
-def load_data(doc_filename,
-              sum_filename,
-              doc_dict_path,
-              sum_dict_path,
-              max_doc_vocab=None,
-              max_sum_vocab=None):
-    logging.info("Load document from %s", doc_filename)
-    logging.info("Load summary from %s", sum_filename)
+def load_data(data_name,
+              data_filename,
+              data_dict_path,
+              max_data_vocab=None):
+    """
 
-    with open(doc_filename) as docfile:
-        docs = docfile.readlines()
-    with open(sum_filename) as sumfile:
-        sums = sumfile.readlines()
+    :param data_name:
+    :param data_filename:
+    :param data_dict_path:
+    :param max_data_vocab:
+    :return:
+    """
 
-    assert len(docs) == len(sums)
+    logging.info("Loading data from %s", data_filename)
 
-    logging.info("Load %d pairs of data.", len(docs))
+    data_dict = dictionary.Dict(data_name)
 
-    docs = list(map(lambda x: x.split(), docs))
-    sums = list(map(lambda x: x.split(), sums))
+    if os.path.isfile(data_dict_path):
+        # The dictionary already exists so we can load it from the file
 
-    doc_dict = load_dict(doc_dict_path, max_doc_vocab)
-    if doc_dict is None:
-        doc_dict = create_dict(doc_dict_path, docs, max_doc_vocab)
+        logging.info("Loading dictionary from '%s'", data_dict_path)
 
-    sum_dict = load_dict(sum_dict_path, max_sum_vocab)
-    if sum_dict is None:
-        sum_dict = create_dict(sum_dict_path, sums, max_sum_vocab)
+        data_dict.load(data_dict_path)
+    else:
+        # The dictionary doesn't exist so we have to create it from the corpus
 
-    docid, cover = corpus_map2id(docs, doc_dict[0])
-    logging.info("Doc dict covers %.2f%% words.", cover * 100)
+        logging.info("Creating dictionary")
 
-    sumid, cover = corpus_map2id(sums, sum_dict[0])
-    logging.info("Sum dict covers %.2f%% words.", cover * 100)
+        with open(data_filename) as data_file:
+            for line in data_file:
+                data_dict.add_words(line.split())
 
-    return docid, sumid, doc_dict, sum_dict
+        # Build the dictionary from all the words of the corpus
+        data_dict.create(max_data_vocab)
+
+        # Save the dictionary to file
+        data_dict.save(data_dict_path)
+
+    data_ids = []
+    with open(data_filename) as data_file:
+        for line in data_file:
+            data_ids.append(data_dict.convert_tokens_to_ids(line.split()))
+
+    logging.info("Data ids list created")
+
+    return data_ids, data_dict
 
 
-def load_valid_data(doc_filename,
-                    sum_filename,
-                    doc_dict,
-                    sum_dict):
-    logging.info("Load validation document from %s; summary from %s", doc_filename, sum_filename)
-    with open(doc_filename) as docfile:
-        docs = docfile.readlines()
-    with open(sum_filename) as sumfile:
-        sums = sumfile.readlines()
-    assert len(sums) == len(docs)
+def load_valid_data(data_filename,
+                    data_dict):
+    logging.info("Load validation document from %s", data_filename)
 
-    logging.info("Load %d validation documents", len(docs))
+    data_ids = []
+    with open(data_filename) as data_file:
+        for line in data_file:
+            data_ids.append(data_dict.convert_tokens_to_ids(line.split()))
 
-    docs = list(map(lambda x: x.split(), docs))
-    sums = list(map(lambda x: x.split(), sums))
+    logging.info("Data ids list created")
 
-    docid, cover = corpus_map2id(docs, doc_dict[0])
-    logging.info("Doc dict covers %.2f%% words on validation set", cover * 100)
-    sumid, cover = corpus_map2id(sums, sum_dict[0])
-    logging.info("Sum dict covers %.2f%% words on validation set", cover * 100)
-    return docid, sumid
+    return data_ids
 
 
 def corpus_preprocess(corpus):
@@ -182,26 +185,29 @@ if __name__ == "__main__":
                         format="%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s",
                         datefmt='%b %d %H:%M')
 
-    docid, sumid, doc_dict, sum_dict = load_data(
-        "data/train.article.txt", "data/train.title.txt",
-        "data/doc_dict.txt", "data/sum_dict.txt",
-        30000, 30000)
+    docid, doc_dict = load_data("document", "data/train.article.txt", "data/doc_dict.txt", 30000)
+
+    sumid, sum_dict = load_data("summary", "data/train.title.txt", "data/sum_dict.txt", 30000)
 
     checkid = np.random.randint(len(docid))
     print(checkid)
+
     print(docid[checkid], sen_map2tok(docid[checkid], doc_dict[1]))
     print(sumid[checkid], sen_map2tok(sumid[checkid], sum_dict[1]))
 
-    docid, sumid = load_valid_data(
-        "data/valid.article.filter.txt", "data/valid.title.filter.txt",
-        doc_dict, sum_dict)
+    val_docid = load_valid_data("data/valid.article.filter.txt", doc_dict)
 
-    checkid = np.random.randint(len(docid))
-    print(checkid)
-    print(docid[checkid], sen_map2tok(docid[checkid], doc_dict[1]))
-    print(sumid[checkid], sen_map2tok(sumid[checkid], sum_dict[1]))
+    val_sumid = load_valid_data("data/valid.title.filter.txt", sum_dict)
 
-    docid = load_test_data("data/test.giga.txt", doc_dict)
-    checkid = np.random.randint(len(docid))
+    checkid = np.random.randint(len(val_docid))
     print(checkid)
-    print(docid[checkid], sen_map2tok(docid[checkid], doc_dict[1]))
+
+    print(val_docid[checkid], sen_map2tok(val_docid[checkid], doc_dict[1]))
+    print(val_sumid[checkid], sen_map2tok(val_sumid[checkid], sum_dict[1]))
+
+    test_docid = load_test_data("data/test.giga.txt", doc_dict)
+
+    checkid = np.random.randint(len(test_docid))
+    print(checkid)
+
+    print(test_docid[checkid], sen_map2tok(test_docid[checkid], doc_dict[1]))

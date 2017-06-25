@@ -18,7 +18,7 @@ if __name__ == "__main__":
         # Returns a Tensor with the contents of the given variable in the checkpoint.
         # Doc: https://www.tensorflow.org/api_docs/python/tf/contrib/framework/load_variable
         global_step = tf.contrib.framework.load_variable(checkpoint_dir="model", name="global_step")
-    except tf.errors.NotFoundError:
+    except:
         global_step = 0
 
     logging.info("Training starts with global_step=%d", global_step)
